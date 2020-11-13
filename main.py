@@ -44,8 +44,22 @@ class Config(QWidget):
         uic.loadUi(UIFile, self)
         UIFile.close()
 
-
 c = Config()
+
+#change winreg
+REG_PATH = r'SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize'
+def set_reg(name, value):
+    try:
+        winreg.CreateKey(winreg.HKEY_CURRENT_USER, REG_PATH)
+        registry_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, REG_PATH, 0, 
+                                       winreg.KEY_WRITE)
+        winreg.SetValueEx(registry_key, name, 0, winreg.REG_SZ, value)
+        winreg.CloseKey(registry_key)
+        return True
+    except WindowsError:
+        return False
+
+            
 # Create the icon
 icon = QIcon(resource_path(dm_cfg))
 
@@ -59,7 +73,9 @@ tray.setVisible(True)
 def cmd_dmon():
     on_icon = QIcon(resource_path(dmon_icon))
     tray.setIcon(on_icon)
-    toaster.show_toast("Darkmode ON!",
+    set_reg('AppsUseLightTheme', str(0))
+    set_reg('SystemUsesLightTheme', str(0))
+    toaster.show_toast("Darkmode",
                    "Welcome to the dark side!",
                    icon_path=dmon_ico,
                    duration=5,
@@ -71,7 +87,9 @@ def cmd_dmon():
 def cmd_dmoff():
     off_icon = QIcon(resource_path(dmoff_icon))
     tray.setIcon(off_icon)
-    toaster.show_toast("Darkmode OFF!",
+    set_reg('AppsUseLightTheme', str(1))
+    set_reg('SystemUsesLightTheme', str(1))
+    toaster.show_toast("Darkmode",
                    "Welcome to the light side!",
                    icon_path=dmoff_ico,
                    duration=5,
