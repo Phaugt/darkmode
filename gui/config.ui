@@ -50,11 +50,14 @@
      <height>22</height>
     </rect>
    </property>
+   <property name="wrapping">
+    <bool>false</bool>
+   </property>
   </widget>
   <widget class="QPushButton" name="saveexit">
    <property name="geometry">
     <rect>
-     <x>170</x>
+     <x>200</x>
      <y>330</y>
      <width>75</width>
      <height>23</height>
@@ -67,7 +70,7 @@
   <widget class="QPushButton" name="saveconfig">
    <property name="geometry">
     <rect>
-     <x>60</x>
+     <x>30</x>
      <y>330</y>
      <width>75</width>
      <height>23</height>
@@ -124,6 +127,19 @@
    </property>
    <property name="text">
     <string>Set your own Username for notifications:</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="clear">
+   <property name="geometry">
+    <rect>
+     <x>115</x>
+     <y>330</y>
+     <width>75</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Clear</string>
    </property>
   </widget>
  </widget>
