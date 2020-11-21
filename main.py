@@ -3,10 +3,11 @@ from PyQt5.QtWidgets import (QAction, QApplication, QLineEdit, QMessageBox, QWid
              QToolButton, QErrorMessage, qApp, QToolBar,
             QStatusBar, QSystemTrayIcon, QMenu, QTimeEdit)
 from PyQt5.QtCore import (QFile, QPoint, QRect, QSize, Qt, QTime,
-            QProcess, QThread, pyqtSignal, pyqtSlot, Q_ARG , Qt, QMetaObject, QObject)
+            QProcess, QThread, pyqtSignal, pyqtSlot, Q_ARG , Qt, QMetaObject,
+            QObject)
 from PyQt5.QtGui import QIcon, QFont, QClipboard, QPixmap, QImage
 from easysettings import EasySettings, esGetError, esError, esSaveError, esSetError
-import sys, os, winreg, time, schedule, greet, PyQt5
+import sys, os, winreg, greet, PyQt5, threading, time, schedule
 from win10toast import ToastNotifier
 #icon taskbar
 try:
@@ -48,6 +49,7 @@ def notification(message, ico):
                    threaded=True)
     #while toaster.notification_active(): time.sleep(0.1)
 
+
 #config window
 class Config(QWidget):
     def __init__(self):
@@ -56,32 +58,40 @@ class Config(QWidget):
         UIFile.open(QFile.ReadOnly)
         uic.loadUi(UIFile, self)
         UIFile.close()
+
+    
         #default times
         try:
             if config.get("first_run") == "Yes":
-                on = self.time_dmon.time()
-                onh = on.hour()
-                onm = on.minute()
-                off = self.time_dmoff.time()
-                offh = off.hour()
-                offm = off.minute()
-                config.set("dark_starth",str(onh))
-                config.set("dark_startm",str(onm))
-                config.set("dark_stoph",str(offh))
-                config.set("dark_stopm",str(offm))
+                on = self.time_dmon.time().toString("hh:mm")
+                off = self.time_dmoff.time().toString("hh:mm")
+                config.set("dark_start",str(on))
+                config.set("dark_stop",str(off))
                 config.set("first_run","No")
                 config.set("state","No")
                 config.save()
             else:
-                onh = config.get("dark_starth")
-                onm = config.get("dark_startm")
-                offh = config.get("dark_stoph")
-                offm = config.get("dark_stopm")
+                on = config.get("dark_start")
+                off = config.get("dark_stop")
                 alt_user = config.get("username")
-                on = QTime(int(onh),int(onm))
-                off = QTime(int(offh),int(offm))
-                self.time_dmon.setTime(on)
-                self.time_dmoff.setTime(off)
+                if on == '00:00':
+                    on = QTime(0,0)
+                    self.time_dmon.setTime(on)
+                elif on[-2:] == '00':
+                    on = QTime(int(on[0:2]),0)
+                    self.time_dmon.setTime(on)
+                else:
+                    on = QTime(int(on[0:2]),int(on[-2:]))
+                    self.time_dmon.setTime(on)
+                if off == '00:00':
+                    off = QTime(0,0)
+                    self.time_dmoff.setTime(off)
+                elif off[-2:] == '00':
+                    off = QTime(int(off[0:2]),0)
+                    self.time_dmoff.setTime(off)
+                else:
+                    off = QTime(int(off[0:2]),int(off[-2:]))
+                    self.time_dmoff.setTime(off)
                 self.alt_username.setText(alt_user)
         except Exception:
             notification("Error with Config file", settings_ico)
@@ -90,24 +100,20 @@ class Config(QWidget):
 
         #buttons
         self.saveexit.clicked.connect(self.SaveConfigExit)
+        self.saveexit.clicked.connect(lambda: worker.cmd_Schedule())
         self.saveconfig.clicked.connect(self.SaveConfig)
+        self.saveconfig.clicked.connect(lambda: worker.cmd_Schedule())
         self.clear.clicked.connect(self.cmd_clear)
         self.alt_username.setToolTip("Requires a restart of Darkmode when changed!")
         #self.time_dmon.setTime(config.get('dark_start'))
 
     def SaveConfigExit(self):
         try:
-            on = self.time_dmon.time()
-            onh = on.hour()
-            onm = on.minute()
-            off = self.time_dmoff.time()
-            offh = off.hour()
-            offm = off.minute()
+            on = self.time_dmon.time().toString("hh:mm")
+            off = self.time_dmoff.time().toString("hh:mm")
             user = self.alt_username.text()
-            config.set("dark_starth",str(onh))
-            config.set("dark_startm",str(onm))
-            config.set("dark_stoph",str(offh))
-            config.set("dark_stopm",str(offm))
+            config.set("dark_start",str(on))
+            config.set("dark_stop",str(off))
             config.set("username",str(user))
             config.set("saved_state","yes")
             config.save()
@@ -117,17 +123,11 @@ class Config(QWidget):
 
 
     def SaveConfig(self):
-        on = self.time_dmon.time()
-        onh = on.hour()
-        onm = on.minute()
-        off = self.time_dmoff.time()
-        offh = off.hour()
-        offm = off.minute()
+        on = self.time_dmon.time().toString("hh:mm")
+        off = self.time_dmoff.time().toString("hh:mm")
         user = self.alt_username.text()
-        config.set("dark_starth",str(onh))
-        config.set("dark_startm",str(onm))
-        config.set("dark_stoph",str(offh))
-        config.set("dark_stopm",str(offm))
+        config.set("dark_start",str(on))
+        config.set("dark_stop",str(off))
         config.set("username",str(user))
         config.set("saved_state","yes")
         config.save()
@@ -139,8 +139,8 @@ class Config(QWidget):
 #to call config window
 c = Config()
 
-#change winreg
 def set_reg(name, value, path, reg_type):
+    """#change winreg"""
     try:
         winreg.CreateKey(winreg.HKEY_CURRENT_USER, path)
         registry_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, path, 0, 
@@ -150,8 +150,10 @@ def set_reg(name, value, path, reg_type):
         return True
     except WindowsError:
         return False
-#check winreg
+
+
 def get_reg(name, path):
+    """#check winreg"""
     state = 0
     try:
         registry_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, path, 0,
@@ -162,29 +164,23 @@ def get_reg(name, path):
     except WindowsError:
         return None
 
-#sets darkmode on and changes icon
-def cmd_dmon():
-    on_icon = QIcon(resource_path(dmon_icon))
-    tray.setIcon(on_icon)
-    set_reg('AppsUseLightTheme', str(0), REG_PATH, winreg.REG_SZ)
-    set_reg('SystemUsesLightTheme', str(0), REG_PATH, winreg.REG_SZ)
-    notification(greet.greetdark, dmon_ico)
+
+def cmd_dmode(state, set_icon):
+    """#sets darkmode on and changes icon"""
+    mode_icon = QIcon(resource_path(set_icon))
+    tray.setIcon(mode_icon)
+    set_reg('AppsUseLightTheme', state, REG_PATH, winreg.REG_SZ)
+    set_reg('SystemUsesLightTheme', state, REG_PATH, winreg.REG_SZ)
+    if state == '0':
+        notification(greet.greetdark, dmon_ico)
+    else:
+        notification(greet.greetlight, dmoff_ico)
     #set_reg('Theme', int(0), EDGE_PATH, winreg.REG_DWORD) #old edge not chromium based
 
-    
-
-#sets darkmode off and changes icon
-def cmd_dmoff():
-    off_icon = QIcon(resource_path(dmoff_icon))
-    tray.setIcon(off_icon)
-    set_reg('AppsUseLightTheme', str(1), REG_PATH, winreg.REG_SZ)
-    set_reg('SystemUsesLightTheme', str(1), REG_PATH, winreg.REG_SZ)
-    notification(greet.greetlight, dmoff_ico)
-    #set_reg('Theme', int(1), EDGE_PATH, winreg.REG_DWORD) #old edge not chromium based
 
 
-#calls QWidget
 def cmd_config():
+    """#calls QWidget"""
     c.show()
     c.setWindowIcon(QIcon(settings_icon))
 
@@ -207,23 +203,88 @@ try:
     else:
         icon = QIcon(resource_path(dm_cfg))
         tray.setIcon(icon)
-        tray.setToolTip("Darkmode - icon changes when you change mode!")
+        tray.setToolTip("Darkmode (icon will change when you change mode!)")
 except WindowsError:
     pass
 tray.setVisible(True)
 
 
+class ContinuousScheduler(schedule.Scheduler):
+    """this is a class which uses inheritance to act as a normal Scheduler,
+        but also can run_continuously() in another thread"""
+        #https://stackoverflow.com/questions/46453938/python-schedule-library-needs-to-get-busy-loop
+    def run_continuously(self, interval=1):
+            """Continuously run, while executing pending jobs at each elapsed
+            time interval.
+            @return cease_continuous_run: threading.Event which can be set to
+            cease continuous run.
+            Please note that it is *intended behavior that run_continuously()
+            does not run missed jobs*. For example, if you've registered a job
+            that should run every minute and you set a continuous run interval
+            of one hour then your job won't be run 60 times at each interval but
+            only once.
+            """
+            cease_continuous_run = threading.Event()
 
-#darkmode on
+            class ScheduleThread(threading.Thread):
+                @classmethod
+                def run(cls):
+                    # I've extended this a bit by adding self.jobs is None
+                    # now it will stop running if there are no jobs stored on this schedule
+                    while not cease_continuous_run.is_set() and self.jobs:
+                        # for debugging
+                        # print("ccr_flag: {0}, no. of jobs: {1}".format(cease_continuous_run.is_set(), len(self.jobs)))
+                        self.run_pending()
+                        time.sleep(interval)
+
+            continuous_thread = ScheduleThread()
+            continuous_thread.start()
+            return cease_continuous_run
+
+class worker(QObject):
+    """worker class"""
+    def cmd_send_en():
+        """sends enable to darkmode command"""
+        cmd_dmode('0',dmon_ico)
+    def cmd_send_ds():
+        """"sends disable to darkmode command"""
+        cmd_dmode('1',dmoff_ico)
+
+    def cmd_Schedule():
+        """to enable schedule"""
+        enable = (config.get("dark_start"))
+        disable = (config.get("dark_stop"))
+        start_schedule = ContinuousScheduler()
+        stop_schedule = ContinuousScheduler()
+        start_schedule.every().day.at(str(enable)).do(worker.cmd_send_en)
+        start_schedule.run_continuously()
+        stop_schedule.every().day.at(str(disable)).do(worker.cmd_send_ds)
+        stop_schedule.run_continuously()
+        notification("Schedule enabled, will trigger Darkmode from settings",settings_ico)
+
+def killthread():
+    schedule.CancelJob
+    schedule.clear()
+    stop_schedule.set()
+    start_schedule.set()
+
+worker.cmd_Schedule()
+
+#menu
 menu = QMenu()
+#darkmode on
+sched = QAction(QIcon(settings_icon),"Enable Schedule")
+menu.addAction(sched)
+sched.triggered.connect(lambda: worker.cmd_Schedule())
+#darkmode on
 dm_on = QAction(QIcon(dmon_icon),"Darkmode On")
 menu.addAction(dm_on)
-dm_on.triggered.connect(cmd_dmon)
-#darkmode off
+dm_on.triggered.connect(lambda: cmd_dmode('0', resource_path(dmon_icon)))
 
+#darkmode off
 dm_off = QAction(QIcon(dmoff_icon),"Darkmode Off")
 menu.addAction(dm_off)
-dm_off.triggered.connect(cmd_dmoff)
+dm_off.triggered.connect(lambda: cmd_dmode('1',resource_path(dmoff_icon)))
 # Settings
 
 configw = QAction(QIcon(settings_icon),"Settings")
@@ -233,6 +294,7 @@ configw.triggered.connect(cmd_config)
 # Quit app
 dmquit = QAction(QIcon(mn_exit),"Exit")
 dmquit.triggered.connect(app.quit)
+dmquit.triggered.connect(lambda: killthread())
 menu.addAction(dmquit)
 
 # Add the menu to the tray
