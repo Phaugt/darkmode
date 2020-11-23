@@ -99,9 +99,9 @@ class Config(QWidget):
 
         #buttons
         self.saveexit.clicked.connect(self.SaveConfigExit)
-        self.saveexit.clicked.connect(lambda: worker.cmd_Schedule())
+        self.saveexit.clicked.connect(lambda: worker.cmd_Schedule("Saved settings to file!"))
         self.saveconfig.clicked.connect(self.SaveConfig)
-        self.saveconfig.clicked.connect(lambda: worker.cmd_Schedule())
+        self.saveconfig.clicked.connect(lambda: worker.cmd_Schedule("Saved settings to file!"))
         self.clear.clicked.connect(self.cmd_clear)
         self.alt_username.setToolTip("Requires a restart of Darkmode when changed!")
 
@@ -248,7 +248,7 @@ class ContinuousScheduler(schedule.Scheduler):
 
 class worker(QObject):
     """worker class"""
-    def cmd_Schedule():
+    def cmd_Schedule(message):
         """to enable schedule worker in separate threads in background"""
         enable = (config.get("dark_start"))
         disable = (config.get("dark_stop"))
@@ -258,7 +258,7 @@ class worker(QObject):
         start_schedule.run_continuously()
         stop_schedule.every().day.at(str(disable)).do(cmd_dmode, state='1',icon=dmoff_ico)
         stop_schedule.run_continuously()
-        notification("Schedule enabled, will trigger Darkmode from settings",settings_ico)
+        notification(message,settings_ico)
 
     def killthread():
         """to kill the runnings jobs and application"""
@@ -270,14 +270,14 @@ class worker(QObject):
         sys.exit()
 
 #to enable the schedule when starting the application
-worker.cmd_Schedule()
+worker.cmd_Schedule("Settings loaded from file!")
 
 #menu
 menu = QMenu()
 #darkmode on
 sched = QAction(QIcon(settings_icon),"Enable Schedule")
 menu.addAction(sched)
-sched.triggered.connect(lambda: worker.cmd_Schedule())
+sched.triggered.connect(lambda: worker.cmd_Schedule("Schedule enabled, will trigger Darkmode from settings"))
 #darkmode on
 dm_on = QAction(QIcon(dmon_icon),"Darkmode On")
 menu.addAction(dm_on)
