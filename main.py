@@ -252,6 +252,8 @@ class worker(QObject):
 
     def cmd_Schedule():
         """to enable schedule"""
+        start_schedule = ()
+        stop_schedule = ()
         enable = (config.get("dark_start"))
         disable = (config.get("dark_stop"))
         start_schedule = ContinuousScheduler()
@@ -265,8 +267,9 @@ class worker(QObject):
 def killthread():
     schedule.CancelJob
     schedule.clear()
-    stop_schedule.set()
-    start_schedule.set()
+    worker.cmd_Schedule.stop_schedule.set()
+    worker.cmd_Schedule.start_schedule.set()
+    sys.exit
 
 worker.cmd_Schedule()
 
