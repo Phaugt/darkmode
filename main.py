@@ -18,6 +18,7 @@ except ImportError:
     pass
 #pyinstaller
 def resource_path(relative_path):
+    """is used for pyinstaller so it can read the relative path"""
     if hasattr(sys, '_MEIPASS'):
         return os.path.join(sys._MEIPASS, relative_path)
     return os.path.join(os.path.abspath('.'), relative_path)
@@ -30,9 +31,9 @@ settings_icon = resource_path("./icons/settings.png")
 settings_ico = resource_path("./icons/settings.ico")
 config_gui = resource_path("./gui/config.ui")
 config = EasySettings("./config/config.conf")
-dm_cfg = resource_path("./icons/dm_cfg.png") #no settings proviced
+dm_cfg = resource_path("./icons/dm_cfg.png") #no settings provided
 mn_exit = resource_path("./icons/exit.png")
-REG_PATH = r'SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize' #values changed for windows theme
+REG_PATH = r'SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize' #reg path values changed for windows theme
 #EDGE_PATH = r'SOFTWARE\\Classes\\Local Settings\\Software\\Microsoft\\Windows\\CurrentVersion\\AppContainer\\Storage\\microsoft.microsoftedge_8wekyb3d8bbwe\\MicrosoftEdge\\Main' #old edge not chromium based
 
 #App
@@ -40,18 +41,19 @@ app = QApplication([])
 app.setQuitOnLastWindowClosed(False)
 toaster = ToastNotifier()
 
-#toaster
+
 def notification(message, ico):
+    """Windows10 notification"""
     toaster.show_toast("Darkmode",
                    message,
                    icon_path=ico,
                    duration=5,
                    threaded=True)
-    #while toaster.notification_active(): time.sleep(0.1)
 
 
 #config window
 class Config(QWidget):
+    """Config window - called from taskbar"""
     def __init__(self):
         super().__init__()
         UIFile = QFile(resource_path(config_gui))
@@ -60,7 +62,7 @@ class Config(QWidget):
         UIFile.close()
 
     
-        #default times
+        #default settings
         try:
             if config.get("first_run") == "Yes":
                 on = self.time_dmon.time().toString("hh:mm")
@@ -68,7 +70,6 @@ class Config(QWidget):
                 config.set("dark_start",str(on))
                 config.set("dark_stop",str(off))
                 config.set("first_run","No")
-                config.set("state","No")
                 config.save()
             else:
                 on = config.get("dark_start")
@@ -96,8 +97,6 @@ class Config(QWidget):
         except Exception:
             notification("Error with Config file", settings_ico)
 
-        #saved config
-
         #buttons
         self.saveexit.clicked.connect(self.SaveConfigExit)
         self.saveexit.clicked.connect(lambda: worker.cmd_Schedule())
@@ -105,9 +104,9 @@ class Config(QWidget):
         self.saveconfig.clicked.connect(lambda: worker.cmd_Schedule())
         self.clear.clicked.connect(self.cmd_clear)
         self.alt_username.setToolTip("Requires a restart of Darkmode when changed!")
-        #self.time_dmon.setTime(config.get('dark_start'))
 
     def SaveConfigExit(self):
+        """Save config to file and exit config window"""
         try:
             on = self.time_dmon.time().toString("hh:mm")
             off = self.time_dmoff.time().toString("hh:mm")
@@ -123,16 +122,21 @@ class Config(QWidget):
 
 
     def SaveConfig(self):
-        on = self.time_dmon.time().toString("hh:mm")
-        off = self.time_dmoff.time().toString("hh:mm")
-        user = self.alt_username.text()
-        config.set("dark_start",str(on))
-        config.set("dark_stop",str(off))
-        config.set("username",str(user))
-        config.set("saved_state","yes")
-        config.save()
+        """Save config to file and keep window open"""
+        try:
+            on = self.time_dmon.time().toString("hh:mm")
+            off = self.time_dmoff.time().toString("hh:mm")
+            user = self.alt_username.text()
+            config.set("dark_start",str(on))
+            config.set("dark_stop",str(off))
+            config.set("username",str(user))
+            config.set("saved_state","yes")
+            config.save()
+        except Exception:
+            notification("Error with Config file", settings_ico)
 
     def cmd_clear(self):
+        """Clear config window content"""
         self.time_dmon.setTime(QTime(0,0))
         self.time_dmoff.setTime(QTime(0,0))
         self.alt_username.clear()
@@ -176,7 +180,6 @@ def cmd_dmode(state, set_icon):
     else:
         notification(greet.greetlight, dmoff_ico)
     #set_reg('Theme', int(0), EDGE_PATH, winreg.REG_DWORD) #old edge not chromium based
-
 
 
 def cmd_config():
@@ -227,6 +230,7 @@ class ContinuousScheduler(schedule.Scheduler):
             cease_continuous_run = threading.Event()
 
             class ScheduleThread(threading.Thread):
+                """The job that should run continuous"""
                 @classmethod
                 def run(cls):
                     # I've extended this a bit by adding self.jobs is None
@@ -241,36 +245,31 @@ class ContinuousScheduler(schedule.Scheduler):
             continuous_thread.start()
             return cease_continuous_run
 
+
 class worker(QObject):
     """worker class"""
-    def cmd_send_en():
-        """sends enable to darkmode command"""
-        cmd_dmode('0',dmon_ico)
-    def cmd_send_ds():
-        """"sends disable to darkmode command"""
-        cmd_dmode('1',dmoff_ico)
-
     def cmd_Schedule():
-        """to enable schedule"""
-        start_schedule = ()
-        stop_schedule = ()
+        """to enable schedule worker in separate threads in background"""
         enable = (config.get("dark_start"))
         disable = (config.get("dark_stop"))
         start_schedule = ContinuousScheduler()
         stop_schedule = ContinuousScheduler()
-        start_schedule.every().day.at(str(enable)).do(worker.cmd_send_en)
+        start_schedule.every().day.at(str(enable)).do(cmd_dmode, state='0',icon=dmon_ico)
         start_schedule.run_continuously()
-        stop_schedule.every().day.at(str(disable)).do(worker.cmd_send_ds)
+        stop_schedule.every().day.at(str(disable)).do(cmd_dmode, state='1',icon=dmoff_ico)
         stop_schedule.run_continuously()
         notification("Schedule enabled, will trigger Darkmode from settings",settings_ico)
 
-def killthread():
-    schedule.CancelJob
-    schedule.clear()
-    worker.cmd_Schedule.stop_schedule.set()
-    worker.cmd_Schedule.start_schedule.set()
-    sys.exit
+    def killthread():
+        """to kill the runnings jobs and application"""
+        ContinuousScheduler.clear
+        schedule.CancelJob()
+        schedule.clear()
+        worker.stop_schedule.set()
+        worker.start_schedule.set()
+        sys.exit()
 
+#to enable the schedule when starting the application
 worker.cmd_Schedule()
 
 #menu
@@ -297,7 +296,7 @@ configw.triggered.connect(cmd_config)
 # Quit app
 dmquit = QAction(QIcon(mn_exit),"Exit")
 dmquit.triggered.connect(app.quit)
-dmquit.triggered.connect(lambda: killthread())
+dmquit.triggered.connect(lambda: worker.killthread())
 menu.addAction(dmquit)
 
 # Add the menu to the tray
