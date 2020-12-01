@@ -22,7 +22,7 @@ def resource_path(relative_path):
     if hasattr(sys, '_MEIPASS'):
         return os.path.join(sys._MEIPASS, relative_path)
     return os.path.join(os.path.abspath('.'), relative_path)
-# variables
+#resources
 dmon_icon = resource_path("./icons/dm_on.png") #darkode on
 dmoff_icon = resource_path("./icons/dm_off.png") #darkmode off
 dmon_ico = resource_path("./icons/dm_on.ico") #darkode on
@@ -56,7 +56,7 @@ class Config(QWidget):
     """Config window - called from taskbar"""
     def __init__(self):
         super().__init__()
-        UIFile = QFile(resource_path(config_gui))
+        UIFile = QFile(config_gui)
         UIFile.open(QFile.ReadOnly)
         uic.loadUi(UIFile, self)
         UIFile.close()
@@ -171,7 +171,7 @@ def get_reg(name, path):
 
 def cmd_dmode(state, set_icon):
     """#sets darkmode on and changes icon"""
-    mode_icon = QIcon(resource_path(set_icon))
+    mode_icon = QIcon(set_icon)
     tray.setIcon(mode_icon)
     set_reg('AppsUseLightTheme', state, REG_PATH, winreg.REG_SZ)
     set_reg('SystemUsesLightTheme', state, REG_PATH, winreg.REG_SZ)
@@ -192,19 +192,19 @@ tray = QSystemTrayIcon()
 try:
     saved_settings = config.get("saved_state")
     if saved_settings == "No":
-        icon = QIcon(resource_path(dm_cfg))
+        icon = QIcon(dm_cfg)
         tray.setIcon(icon)
         tray.setToolTip("Darkmode - go to settings!")
     elif get_reg('SystemUsesLightTheme', REG_PATH) == '1':
-        off_icon = QIcon(resource_path(dmoff_icon))
+        off_icon = QIcon(dmoff_icon)
         tray.setIcon(off_icon)
         tray.setToolTip("Darkmode")
     elif get_reg('SystemUsesLightTheme', REG_PATH) == '0':
-        on_icon = QIcon(resource_path(dmon_icon))
+        on_icon = QIcon(dmon_icon)
         tray.setIcon(on_icon)
         tray.setToolTip("Darkmode")
     else:
-        icon = QIcon(resource_path(dm_cfg))
+        icon = QIcon(dm_cfg)
         tray.setIcon(icon)
         tray.setToolTip("Darkmode (icon will change when you change mode!)")
 except WindowsError:
@@ -254,9 +254,9 @@ class worker(QObject):
         disable = (config.get("dark_stop"))
         start_schedule = ContinuousScheduler()
         stop_schedule = ContinuousScheduler()
-        start_schedule.every().day.at(str(enable)).do(cmd_dmode, state='0',icon=dmon_ico)
+        start_schedule.every().day.at(str(enable)).do(cmd_dmode, state='0',set_icon=dmon_ico)
         start_schedule.run_continuously()
-        stop_schedule.every().day.at(str(disable)).do(cmd_dmode, state='1',icon=dmoff_ico)
+        stop_schedule.every().day.at(str(disable)).do(cmd_dmode, state='1',set_icon=dmoff_ico)
         stop_schedule.run_continuously()
         notification(message,settings_ico)
 
@@ -264,7 +264,7 @@ class worker(QObject):
         """to kill the runnings jobs and application"""
         ContinuousScheduler.clear
         schedule.CancelJob()
-        schedule.clear()
+        schedule.clear
         worker.stop_schedule.set()
         worker.start_schedule.set()
         sys.exit()
@@ -281,12 +281,12 @@ sched.triggered.connect(lambda: worker.cmd_Schedule("Schedule enabled, will trig
 #darkmode on
 dm_on = QAction(QIcon(dmon_icon),"Darkmode On")
 menu.addAction(dm_on)
-dm_on.triggered.connect(lambda: cmd_dmode('0', resource_path(dmon_icon)))
+dm_on.triggered.connect(lambda: cmd_dmode('0', dmon_icon))
 
 #darkmode off
 dm_off = QAction(QIcon(dmoff_icon),"Darkmode Off")
 menu.addAction(dm_off)
-dm_off.triggered.connect(lambda: cmd_dmode('1',resource_path(dmoff_icon)))
+dm_off.triggered.connect(lambda: cmd_dmode('1',dmoff_icon))
 # Settings
 
 configw = QAction(QIcon(settings_icon),"Settings")
