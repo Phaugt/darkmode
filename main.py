@@ -33,6 +33,9 @@ config_gui = resource_path("./gui/config.ui")
 config = EasySettings("./config/config.conf")
 dm_cfg = resource_path("./icons/dm_cfg.png") #no settings provided
 mn_exit = resource_path("./icons/exit.png")
+logo = resource_path("./icons/logo.png")
+logo_ico = resource_path("./icons/logo.ico")
+cfg_bg = resource_path("./gui/bg.png")
 REG_PATH = r'SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize' #reg path values changed for windows theme
 #EDGE_PATH = r'SOFTWARE\\Classes\\Local Settings\\Software\\Microsoft\\Windows\\CurrentVersion\\AppContainer\\Storage\\microsoft.microsoftedge_8wekyb3d8bbwe\\MicrosoftEdge\\Main' #old edge not chromium based
 
@@ -185,7 +188,9 @@ def cmd_dmode(state, set_icon):
 def cmd_config():
     """#calls QWidget"""
     c.show()
-    c.setWindowIcon(QIcon(settings_icon))
+    cf_bg = QPixmap(cfg_bg)
+    c.bg.setPixmap(cf_bg)
+    c.setWindowIcon(QIcon(logo_ico))
 
 # Create the tray
 tray = QSystemTrayIcon()

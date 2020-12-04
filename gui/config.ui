@@ -89,6 +89,9 @@
      <height>16</height>
     </rect>
    </property>
+   <property name="styleSheet">
+    <string notr="true">color: rgb(238, 238, 238);</string>
+   </property>
    <property name="text">
     <string>When should Darkmode activate</string>
    </property>
@@ -101,6 +104,9 @@
      <width>161</width>
      <height>16</height>
     </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color: rgb(238, 238, 238);</string>
    </property>
    <property name="text">
     <string>And when should Darkmode stop</string>
@@ -125,6 +131,9 @@
      <height>16</height>
     </rect>
    </property>
+   <property name="styleSheet">
+    <string notr="true">color: rgb(238, 238, 238);</string>
+   </property>
    <property name="text">
     <string>Set your own Username for notifications:</string>
    </property>
@@ -142,6 +151,35 @@
     <string>Clear</string>
    </property>
   </widget>
+  <widget class="QLabel" name="bg">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>300</width>
+     <height>360</height>
+    </rect>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>300</width>
+     <height>360</height>
+    </size>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+  </widget>
+  <zorder>bg</zorder>
+  <zorder>time_dmon</zorder>
+  <zorder>time_dmoff</zorder>
+  <zorder>saveexit</zorder>
+  <zorder>saveconfig</zorder>
+  <zorder>label</zorder>
+  <zorder>label_2</zorder>
+  <zorder>alt_username</zorder>
+  <zorder>label_3</zorder>
+  <zorder>clear</zorder>
  </widget>
  <resources/>
  <connections/>
