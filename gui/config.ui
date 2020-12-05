@@ -40,6 +40,9 @@
      <height>22</height>
     </rect>
    </property>
+   <property name="styleSheet">
+    <string notr="true">background-color: rgb(238, 238, 238);</string>
+   </property>
   </widget>
   <widget class="QTimeEdit" name="time_dmoff">
    <property name="geometry">
@@ -49,6 +52,9 @@
      <width>51</width>
      <height>22</height>
     </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">background-color: rgb(238, 238, 238);</string>
    </property>
    <property name="wrapping">
     <bool>false</bool>
@@ -120,6 +126,9 @@
      <width>261</width>
      <height>20</height>
     </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">background-color: rgb(238, 238, 238);</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_3">
