@@ -36,6 +36,7 @@ mn_exit = resource_path("./icons/exit.png")
 logo = resource_path("./icons/logo.png")
 logo_ico = resource_path("./icons/logo.ico")
 cfg_bg = resource_path("./gui/bg.png")
+dm_enab = resource_path("./icons/dm_enab.png")
 REG_PATH = r'SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize' #reg path values changed for windows theme
 #EDGE_PATH = r'SOFTWARE\\Classes\\Local Settings\\Software\\Microsoft\\Windows\\CurrentVersion\\AppContainer\\Storage\\microsoft.microsoftedge_8wekyb3d8bbwe\\MicrosoftEdge\\Main' #old edge not chromium based
 
@@ -280,7 +281,7 @@ worker.cmd_Schedule("Settings loaded from file!")
 #menu
 menu = QMenu()
 #darkmode on
-sched = QAction(QIcon(settings_icon),"Enable Schedule")
+sched = QAction(QIcon(dm_enab),"Enable Schedule")
 menu.addAction(sched)
 sched.triggered.connect(lambda: worker.cmd_Schedule("Schedule enabled, will trigger Darkmode from settings"))
 #darkmode on
