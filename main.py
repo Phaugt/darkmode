@@ -9,6 +9,7 @@ from PyQt5.QtGui import QIcon, QFont, QClipboard, QPixmap, QImage
 from easysettings import EasySettings, esGetError, esError, esSaveError, esSetError
 import sys, os, winreg, greet, PyQt5, threading, time, schedule
 from win10toast import ToastNotifier
+from os.path import expanduser
 #icon taskbar
 try:
     from PyQt5.QtWinExtras import QtWin
@@ -30,8 +31,10 @@ dmoff_ico = resource_path("./icons/dm_off.ico") #darkmode off
 settings_icon = resource_path("./icons/settings.png")
 settings_ico = resource_path("./icons/settings.ico")
 config_gui = resource_path("./gui/config.ui")
-config = EasySettings("./config/config.conf")
+userfold = expanduser("~")
+config = EasySettings(userfold+"./darkmode.conf")
 dm_cfg = resource_path("./icons/dm_cfg.png") #no settings provided
+dm_cfg_ico = resource_path("./icons/dm_cfg.png") #no settings provided
 mn_exit = resource_path("./icons/exit.png")
 logo = resource_path("./icons/logo.png")
 logo_ico = resource_path("./icons/logo.ico")
@@ -39,6 +42,17 @@ cfg_bg = resource_path("./gui/bg.png")
 dm_enab = resource_path("./icons/dm_enab.png")
 REG_PATH = r'SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize' #reg path values changed for windows theme
 #EDGE_PATH = r'SOFTWARE\\Classes\\Local Settings\\Software\\Microsoft\\Windows\\CurrentVersion\\AppContainer\\Storage\\microsoft.microsoftedge_8wekyb3d8bbwe\\MicrosoftEdge\\Main' #old edge not chromium based
+
+#failsafe first run
+try:
+    firstrn = config.get("first_run")
+    if firstrn == "":
+        config.set("first_run", "No")
+        config.set("dark_start","00:00")
+        config.set("dark_stop","00:00")
+        config.save()
+except Exception:
+    notification("Error with Config file", dm_cfg_ico)
 
 #App
 app = QApplication([])
@@ -65,17 +79,9 @@ class Config(QWidget):
         uic.loadUi(UIFile, self)
         UIFile.close()
 
-    
-        #default settings
+        #get settings
         try:
-            if config.get("first_run") == "Yes":
-                on = self.time_dmon.time().toString("hh:mm")
-                off = self.time_dmoff.time().toString("hh:mm")
-                config.set("dark_start",str(on))
-                config.set("dark_stop",str(off))
-                config.set("first_run","No")
-                config.save()
-            else:
+            if config.get("first_run") == "No":
                 on = config.get("dark_start")
                 off = config.get("dark_stop")
                 alt_user = config.get("username")
@@ -99,7 +105,7 @@ class Config(QWidget):
                     self.time_dmoff.setTime(off)
                 self.alt_username.setText(alt_user)
         except Exception:
-            notification("Error with Config file", settings_ico)
+            notification("Error with Config file", dm_cfg_ico)
 
         #buttons
         self.saveexit.clicked.connect(self.SaveConfigExit)
@@ -122,7 +128,7 @@ class Config(QWidget):
             config.save()
             c.close()
         except Exception:
-            notification("Error with Config file", settings_ico)
+            notification("Error with Config file", dm_cfg_ico)
 
 
     def SaveConfig(self):
@@ -137,13 +143,14 @@ class Config(QWidget):
             config.set("saved_state","yes")
             config.save()
         except Exception:
-            notification("Error with Config file", settings_ico)
+            notification("Error with Config file", dm_cfg_ico)
 
     def cmd_clear(self):
         """Clear config window content"""
         self.time_dmon.setTime(QTime(0,0))
         self.time_dmoff.setTime(QTime(0,0))
         self.alt_username.clear()
+
 #to call config window
 c = Config()
 
@@ -268,12 +275,8 @@ class worker(QObject):
 
     def killthread():
         """to kill the runnings jobs and application"""
-        ContinuousScheduler.clear
-        schedule.CancelJob()
-        schedule.clear
-        worker.stop_schedule.set()
-        worker.start_schedule.set()
-        sys.exit()
+        ContinuousScheduler.clear(self)
+
 
 #to enable the schedule when starting the application
 worker.cmd_Schedule("Settings loaded from file!")
