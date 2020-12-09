@@ -259,7 +259,7 @@ class ContinuousScheduler(schedule.Scheduler):
             return cease_continuous_run
 
 
-class worker(QObject):
+class worker:
     """worker class"""
     def cmd_Schedule(message):
         """to enable schedule worker in separate threads in background"""
@@ -275,7 +275,7 @@ class worker(QObject):
 
     def killthread():
         """to kill the runnings jobs and application"""
-        ContinuousScheduler.clear(self)
+        ContinuousScheduler.clear()
 
 
 #to enable the schedule when starting the application
