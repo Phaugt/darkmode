@@ -41,8 +41,7 @@ logo_ico = resource_path("./icons/logo.ico")
 cfg_bg = resource_path("./gui/bg.png")
 dm_enab = resource_path("./icons/dm_enab.png")
 REG_PATH = r'SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize' #reg path values changed for windows theme
-START_PATH = r'SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run'
-#EDGE_PATH = r'SOFTWARE\\Classes\\Local Settings\\Software\\Microsoft\\Windows\\CurrentVersion\\AppContainer\\Storage\\microsoft.microsoftedge_8wekyb3d8bbwe\\MicrosoftEdge\\Main' #old edge not chromium based
+START_PATH = r'SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run' #for autostart with windows
 
 #failsafe first run
 try:
@@ -114,9 +113,9 @@ class Config(QWidget):
 
         #buttons
         self.saveexit.clicked.connect(self.SaveConfigExit)
-        self.saveexit.clicked.connect(lambda: worker.cmd_Schedule("Saved settings to file!"))
+        self.saveexit.clicked.connect(lambda: worker.cmd_Schedule(self, "Saved settings to file!"))
         self.saveconfig.clicked.connect(self.SaveConfig)
-        self.saveconfig.clicked.connect(lambda: worker.cmd_Schedule("Saved settings to file!"))
+        self.saveconfig.clicked.connect(lambda: worker.cmd_Schedule(self, "Saved settings to file!"))
         self.clear.clicked.connect(self.cmd_clear)
         self.alt_username.setToolTip("Requires a restart of Darkmode when changed!")
         self.autoStart.stateChanged.connect(self.cmd_autoStart)
@@ -194,6 +193,7 @@ def set_reg(name, value, path, reg_type):
 
 def del_reg(name, path):
     """#delete winreg"""
+    #thanks to tautulli code
     try:
         registry_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, path, 0, winreg.KEY_ALL_ACCESS)
         winreg.QueryValueEx(registry_key, name)
@@ -232,7 +232,6 @@ def cmd_dmode(state, set_icon):
         notification(greet.greetdark, dmon_ico)
     else:
         notification(greet.greetlight, dmoff_ico)
-    #set_reg('Theme', int(0), EDGE_PATH, winreg.REG_DWORD) #old edge not chromium based
 
 
 def cmd_config():
@@ -301,9 +300,9 @@ class ContinuousScheduler(schedule.Scheduler):
             return cease_continuous_run
 
 
-class worker:
+class worker():
     """worker class"""
-    def cmd_Schedule(message):
+    def cmd_Schedule(self, message):
         """to enable schedule worker in separate threads in background"""
         enable = (config.get("dark_start"))
         disable = (config.get("dark_stop"))
@@ -315,20 +314,20 @@ class worker:
         stop_schedule.run_continuously()
         notification(message,settings_ico)
 
-    def killthread():
+    def killthread(self):
         """to kill the runnings jobs and application"""
         ContinuousScheduler.clear()
 
 
 #to enable the schedule when starting the application
-worker.cmd_Schedule("Settings loaded from file!")
+worker.cmd_Schedule(None,"Settings loaded from file!")
 
 #menu
 menu = QMenu()
 #darkmode on
 sched = QAction(QIcon(dm_enab),"Enable Schedule")
 menu.addAction(sched)
-sched.triggered.connect(lambda: worker.cmd_Schedule("Schedule enabled, will trigger Darkmode from settings"))
+sched.triggered.connect(lambda: worker.cmd_Schedule(None, "Schedule enabled, will trigger Darkmode from settings"))
 #darkmode on
 dm_on = QAction(QIcon(dmon_icon),"Darkmode On")
 menu.addAction(dm_on)
@@ -347,7 +346,7 @@ configw.triggered.connect(cmd_config)
 # Quit app
 dmquit = QAction(QIcon(mn_exit),"Exit")
 dmquit.triggered.connect(app.quit)
-dmquit.triggered.connect(lambda: worker.killthread())
+dmquit.triggered.connect(lambda: worker.killthread(self=None))
 menu.addAction(dmquit)
 
 # Add the menu to the tray
