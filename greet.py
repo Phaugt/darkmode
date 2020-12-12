@@ -1,7 +1,10 @@
 import getpass
 import random
 from easysettings import EasySettings
-config = EasySettings("./config/config.conf")
+from os.path import expanduser
+
+userfold = expanduser("~")
+config = EasySettings(userfold+"./darkmode.conf")
 
 if config.get("username") is "":
     username = getpass.getuser()

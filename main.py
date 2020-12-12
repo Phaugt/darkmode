@@ -34,13 +34,14 @@ config_gui = resource_path("./gui/config.ui")
 userfold = expanduser("~")
 config = EasySettings(userfold+"./darkmode.conf")
 dm_cfg = resource_path("./icons/dm_cfg.png") #no settings provided
-dm_cfg_ico = resource_path("./icons/dm_cfg.png") #no settings provided
+dm_cfg_ico = resource_path("./icons/dm_cfg.ico") #no settings provided
 mn_exit = resource_path("./icons/exit.png")
 logo = resource_path("./icons/logo.png")
 logo_ico = resource_path("./icons/logo.ico")
 cfg_bg = resource_path("./gui/bg.png")
 dm_enab = resource_path("./icons/dm_enab.png")
 REG_PATH = r'SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize' #reg path values changed for windows theme
+START_PATH = r'SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run'
 #EDGE_PATH = r'SOFTWARE\\Classes\\Local Settings\\Software\\Microsoft\\Windows\\CurrentVersion\\AppContainer\\Storage\\microsoft.microsoftedge_8wekyb3d8bbwe\\MicrosoftEdge\\Main' #old edge not chromium based
 
 #failsafe first run
@@ -65,7 +66,7 @@ def notification(message, ico):
     toaster.show_toast("Darkmode",
                    message,
                    icon_path=ico,
-                   duration=5,
+                   duration=3,
                    threaded=True)
 
 
@@ -104,6 +105,10 @@ class Config(QWidget):
                     off = QTime(int(off[0:2]),int(off[-2:]))
                     self.time_dmoff.setTime(off)
                 self.alt_username.setText(alt_user)
+                if config.get('Autostart') == 'Yes':
+                    self.autoStart.setChecked(True)
+                else:
+                    self.autoStart.setChecked(False)
         except Exception:
             notification("Error with Config file", dm_cfg_ico)
 
@@ -114,6 +119,27 @@ class Config(QWidget):
         self.saveconfig.clicked.connect(lambda: worker.cmd_Schedule("Saved settings to file!"))
         self.clear.clicked.connect(self.cmd_clear)
         self.alt_username.setToolTip("Requires a restart of Darkmode when changed!")
+        self.autoStart.stateChanged.connect(self.cmd_autoStart)
+
+    def cmd_autoStart(self):
+        name = 'Darkmode'
+        cd = os.getcwd()
+        cmd = (cd+"\\Darkmode.exe")
+        if self.autoStart.isChecked():
+            try:
+                set_reg(name,cmd,START_PATH, winreg.REG_SZ)
+                config.set("Autostart","Yes")
+                config.save()
+            except WindowsError:
+                notification("Could not create registry key!",dm_cfg_ico)
+        else:
+            try:
+                del_reg(name, START_PATH)
+                config.set("Autostart","No")
+                config.save()
+            except WindowsError:
+                notification("Could not delete registry key!",dm_cfg_ico)
+
 
     def SaveConfigExit(self):
         """Save config to file and exit config window"""
@@ -166,6 +192,22 @@ def set_reg(name, value, path, reg_type):
     except WindowsError:
         return False
 
+def del_reg(name, path):
+    """#delete winreg"""
+    try:
+        registry_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, path, 0, winreg.KEY_ALL_ACCESS)
+        winreg.QueryValueEx(registry_key, name)
+        reg_value_exists = True
+    except WindowsError:
+        reg_value_exists = False
+
+    if reg_value_exists:
+        try:
+            winreg.DeleteValue(registry_key, name)
+            winreg.CloseKey(registry_key)
+            return True
+        except WindowsError:
+            return False
 
 def get_reg(name, path):
     """#check winreg"""
