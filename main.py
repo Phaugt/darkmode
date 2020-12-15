@@ -226,8 +226,8 @@ def cmd_dmode(state, set_icon):
     """#sets darkmode on and changes icon"""
     mode_icon = QIcon(set_icon)
     tray.setIcon(mode_icon)
-    set_reg('AppsUseLightTheme', state, REG_PATH, winreg.REG_SZ)
-    set_reg('SystemUsesLightTheme', state, REG_PATH, winreg.REG_SZ)
+    set_reg('AppsUseLightTheme', state, REG_PATH, winreg.REG_DWORD)
+    set_reg('SystemUsesLightTheme', state, REG_PATH, winreg.REG_DWORD)
     if state == '0':
         notification(greet.greetdark, dmon_ico)
     else:
@@ -249,11 +249,11 @@ try:
         icon = QIcon(dm_cfg)
         tray.setIcon(icon)
         tray.setToolTip("Darkmode - go to settings!")
-    elif get_reg('SystemUsesLightTheme', REG_PATH) == '1':
+    elif get_reg('SystemUsesLightTheme', REG_PATH) == 1:
         off_icon = QIcon(dmoff_icon)
         tray.setIcon(off_icon)
         tray.setToolTip("Darkmode")
-    elif get_reg('SystemUsesLightTheme', REG_PATH) == '0':
+    elif get_reg('SystemUsesLightTheme', REG_PATH) == 0:
         on_icon = QIcon(dmon_icon)
         tray.setIcon(on_icon)
         tray.setToolTip("Darkmode")
@@ -308,9 +308,9 @@ class worker():
         disable = (config.get("dark_stop"))
         start_schedule = ContinuousScheduler()
         stop_schedule = ContinuousScheduler()
-        start_schedule.every().day.at(str(enable)).do(cmd_dmode, state='0',set_icon=dmon_ico)
+        start_schedule.every().day.at(str(enable)).do(cmd_dmode, state=0,set_icon=dmon_ico)
         start_schedule.run_continuously()
-        stop_schedule.every().day.at(str(disable)).do(cmd_dmode, state='1',set_icon=dmoff_ico)
+        stop_schedule.every().day.at(str(disable)).do(cmd_dmode, state=1,set_icon=dmoff_ico)
         stop_schedule.run_continuously()
         notification(message,settings_ico)
 
@@ -331,12 +331,12 @@ sched.triggered.connect(lambda: worker.cmd_Schedule(None, "Schedule enabled, wil
 #darkmode on
 dm_on = QAction(QIcon(dmon_icon),"Darkmode On")
 menu.addAction(dm_on)
-dm_on.triggered.connect(lambda: cmd_dmode('0', dmon_icon))
+dm_on.triggered.connect(lambda: cmd_dmode(0, dmon_icon))
 
 #darkmode off
 dm_off = QAction(QIcon(dmoff_icon),"Darkmode Off")
 menu.addAction(dm_off)
-dm_off.triggered.connect(lambda: cmd_dmode('1',dmoff_icon))
+dm_off.triggered.connect(lambda: cmd_dmode(1,dmoff_icon))
 # Settings
 
 configw = QAction(QIcon(settings_icon),"Settings")
