@@ -228,7 +228,7 @@ def cmd_dmode(state, set_icon):
     tray.setIcon(mode_icon)
     set_reg('AppsUseLightTheme', state, REG_PATH, winreg.REG_DWORD)
     set_reg('SystemUsesLightTheme', state, REG_PATH, winreg.REG_DWORD)
-    if state == '0':
+    if state == 0:
         notification(greet.greetdark, dmon_ico)
     else:
         notification(greet.greetlight, dmoff_ico)
