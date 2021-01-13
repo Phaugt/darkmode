@@ -5,11 +5,12 @@ from PyQt5.QtWidgets import (QAction, QApplication, QLineEdit, QMessageBox, QWid
 from PyQt5.QtCore import (QFile, QPoint, QRect, QSize, Qt, QTime,
             QProcess, QThread, pyqtSignal, pyqtSlot, Q_ARG , Qt, QMetaObject,
             QObject)
-from PyQt5.QtGui import QIcon, QFont, QClipboard, QPixmap, QImage
-from easysettings import EasySettings, esGetError, esError, esSaveError, esSetError
+from PyQt5.QtGui import QIcon, QPixmap, QImage
+from easysettings import EasySettings
 import sys, os, winreg, greet, PyQt5, threading, time, schedule
 from win10toast import ToastNotifier
 from os.path import expanduser
+
 #icon taskbar
 try:
     from PyQt5.QtWinExtras import QtWin
@@ -17,12 +18,14 @@ try:
     QtWin.setCurrentProcessExplicitAppUserModelID(myappid)    
 except ImportError:
     pass
+
 #pyinstaller
 def resource_path(relative_path):
     """is used for pyinstaller so it can read the relative path"""
     if hasattr(sys, '_MEIPASS'):
         return os.path.join(sys._MEIPASS, relative_path)
     return os.path.join(os.path.abspath('.'), relative_path)
+
 #resources
 dmon_icon = resource_path("./icons/dm_on.png") #darkode on
 dmoff_icon = resource_path("./icons/dm_off.png") #darkmode off
@@ -40,21 +43,11 @@ logo = resource_path("./icons/logo.png")
 logo_ico = resource_path("./icons/logo.ico")
 cfg_bg = resource_path("./gui/bg.png")
 dm_enab = resource_path("./icons/dm_enab.png")
-REG_PATH = r'SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize' #reg path values changed for windows theme
+dm_vers = 'v.1.02 - 2021-01-13'
+REG_PATH = r'SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize' #win theme
 START_PATH = r'SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run' #for autostart with windows
 
-#failsafe first run
-try:
-    firstrn = config.get("first_run")
-    if firstrn == "":
-        config.set("first_run", "No")
-        config.set("dark_start","00:00")
-        config.set("dark_stop","00:00")
-        config.save()
-except Exception:
-    notification("Error with Config file", dm_cfg_ico)
 
-#App
 app = QApplication([])
 app.setQuitOnLastWindowClosed(False)
 toaster = ToastNotifier()
@@ -68,6 +61,17 @@ def notification(message, ico):
                    duration=3,
                    threaded=True)
 
+
+#failsafe first run
+try:
+    firstrn = config.get("first_run")
+    if firstrn == "":
+        config.set("first_run", "No")
+        config.set("dark_start","00:00")
+        config.set("dark_stop","00:00")
+        config.save()
+except Exception:
+    notification("Error with Config file", dm_cfg_ico)
 
 #config window
 class Config(QWidget):
@@ -240,6 +244,7 @@ def cmd_config():
     cf_bg = QPixmap(cfg_bg)
     c.bg.setPixmap(cf_bg)
     c.setWindowIcon(QIcon(logo_ico))
+    c.dmVersion.setText(dm_vers)
 
 # Create the tray
 tray = QSystemTrayIcon()
@@ -317,6 +322,8 @@ class worker():
     def killthread(self):
         """to kill the runnings jobs and application"""
         ContinuousScheduler.clear()
+        ContinuousScheduler.run_continuously.ScheduleThread.cease_continuous_run.set(self)
+        
 
 
 #to enable the schedule when starting the application
@@ -327,7 +334,7 @@ menu = QMenu()
 #darkmode on
 sched = QAction(QIcon(dm_enab),"Enable Schedule")
 menu.addAction(sched)
-sched.triggered.connect(lambda: worker.cmd_Schedule(None, "Schedule enabled, will trigger Darkmode from settings"))
+sched.triggered.connect(lambda: worker.cmd_Schedule(None,"Schedule enabled, settings loaded!"))
 #darkmode on
 dm_on = QAction(QIcon(dmon_icon),"Darkmode On")
 menu.addAction(dm_on)
