@@ -43,7 +43,7 @@ logo = resource_path("./icons/logo.png")
 logo_ico = resource_path("./icons/logo.ico")
 cfg_bg = resource_path("./gui/bg.png")
 dm_enab = resource_path("./icons/dm_enab.png")
-dm_vers = 'v.1.02 - 2021-01-13'
+dm_vers = 'v.1.04 - 2021-01-29'
 REG_PATH = r'SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize' #win theme
 START_PATH = r'SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run' #for autostart with windows
 
