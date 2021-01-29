@@ -117,9 +117,9 @@ class Config(QWidget):
 
         #buttons
         self.saveexit.clicked.connect(self.SaveConfigExit)
-        self.saveexit.clicked.connect(lambda: worker.cmd_Schedule(self, "Saved settings to file!"))
+        self.saveexit.clicked.connect(lambda: w.cmd_Schedule("Saved settings to file!"))
         self.saveconfig.clicked.connect(self.SaveConfig)
-        self.saveconfig.clicked.connect(lambda: worker.cmd_Schedule(self, "Saved settings to file!"))
+        self.saveconfig.clicked.connect(lambda: w.cmd_Schedule("Saved settings to file!"))
         self.clear.clicked.connect(self.cmd_clear)
         self.alt_username.setToolTip("Requires a restart of Darkmode when changed!")
         self.autoStart.stateChanged.connect(self.cmd_autoStart)
@@ -305,36 +305,48 @@ class ContinuousScheduler(schedule.Scheduler):
             return cease_continuous_run
 
 
-class worker():
+class Worker():
     """worker class"""
+    start_schedule = ContinuousScheduler()
+    stop_schedule = ContinuousScheduler()
+    stopDm1 = object
+    stopDm2 = object
+
+
     def cmd_Schedule(self, message):
         """to enable schedule worker in separate threads in background"""
         enable = (config.get("dark_start"))
         disable = (config.get("dark_stop"))
-        start_schedule = ContinuousScheduler()
-        stop_schedule = ContinuousScheduler()
-        start_schedule.every().day.at(str(enable)).do(cmd_dmode, state=0,set_icon=dmon_ico)
-        start_schedule.run_continuously()
-        stop_schedule.every().day.at(str(disable)).do(cmd_dmode, state=1,set_icon=dmoff_ico)
-        stop_schedule.run_continuously()
-        notification(message,settings_ico)
 
-    def killthread(self):
-        """to kill the runnings jobs and application"""
-        ContinuousScheduler.clear()
-        ContinuousScheduler.run_continuously.ScheduleThread.cease_continuous_run.set(self)
+        self.start_schedule.every().day.at(str(enable)).do(cmd_dmode, state=0,set_icon=dmon_ico)
+        self.stopDm1 = self.start_schedule.run_continuously()
         
 
+        self.stop_schedule.every().day.at(str(disable)).do(cmd_dmode, state=1,set_icon=dmoff_ico)
+        self.stopDm2 = self.stop_schedule.run_continuously()
+
+        notification(message,settings_ico)
+
+    def stopSched(self):
+        """to kill the runnings jobs and application"""
+        self.stopDm1.set()
+        self.stopDm1.clear()
+        self.start_schedule.clear()
+        self.stopDm2.set()
+        self.stopDm2.clear()
+        self.stop_schedule.clear()
+    
 
 #to enable the schedule when starting the application
-worker.cmd_Schedule(None,"Settings loaded from file!")
+w = Worker()
+w.cmd_Schedule("Settings loaded from file!")
 
 #menu
 menu = QMenu()
 #darkmode on
 sched = QAction(QIcon(dm_enab),"Enable Schedule")
 menu.addAction(sched)
-sched.triggered.connect(lambda: worker.cmd_Schedule(None,"Schedule enabled, settings loaded!"))
+sched.triggered.connect(lambda: w.cmd_Schedule("Schedule enabled, settings loaded!"))
 #darkmode on
 dm_on = QAction(QIcon(dmon_icon),"Darkmode On")
 menu.addAction(dm_on)
@@ -352,8 +364,8 @@ configw.triggered.connect(cmd_config)
 
 # Quit app
 dmquit = QAction(QIcon(mn_exit),"Exit")
+dmquit.triggered.connect(lambda: w.stopSched())
 dmquit.triggered.connect(app.quit)
-dmquit.triggered.connect(lambda: worker.killthread(self=None))
 menu.addAction(dmquit)
 
 # Add the menu to the tray

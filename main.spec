@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['main.py'],
-             pathex=['P:\\GIT\\darkmode'],
+             pathex=['C:\\GIT\\darkmode'],
              binaries=[],
              datas=[('greet.py', '.'), ('./icons/*', 'icons'), ('./gui/*', 'gui')],
              hiddenimports=[],
