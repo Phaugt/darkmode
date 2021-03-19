@@ -14,7 +14,7 @@ from os.path import expanduser
 #icon taskbar
 try:
     from PyQt5.QtWinExtras import QtWin
-    myappid = 'darkmode.python.scheudule.program'
+    myappid = 'darkmode.python.schedule.program'
     QtWin.setCurrentProcessExplicitAppUserModelID(myappid)    
 except ImportError:
     pass
@@ -117,8 +117,10 @@ class Config(QWidget):
 
         #buttons
         self.saveexit.clicked.connect(self.SaveConfigExit)
+        self.saveexit.clicked.connect(lambda: w.stopSched())
         self.saveexit.clicked.connect(lambda: w.cmd_Schedule("Saved settings to file!"))
         self.saveconfig.clicked.connect(self.SaveConfig)
+        self.saveconfig.clicked.connect(lambda: w.stopSched())
         self.saveconfig.clicked.connect(lambda: w.cmd_Schedule("Saved settings to file!"))
         self.clear.clicked.connect(self.cmd_clear)
         self.alt_username.setToolTip("Requires a restart of Darkmode when changed!")
@@ -346,6 +348,7 @@ menu = QMenu()
 #darkmode on
 sched = QAction(QIcon(dm_enab),"Enable Schedule")
 menu.addAction(sched)
+sched.triggered.connect(lambda: w.stopSched())
 sched.triggered.connect(lambda: w.cmd_Schedule("Schedule enabled, settings loaded!"))
 #darkmode on
 dm_on = QAction(QIcon(dmon_icon),"Darkmode On")

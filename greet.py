@@ -6,7 +6,7 @@ from os.path import expanduser
 userfold = expanduser("~")
 config = EasySettings(userfold+"./darkmode.conf")
 
-if config.get("username") is "":
+if config.get("username") == "":
     username = getpass.getuser()
 else:
     username = config.get("username")
