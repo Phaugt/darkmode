@@ -1,10 +1,7 @@
 from PyQt5 import uic
 from PyQt5.QtWidgets import (QAction, QApplication, QLineEdit, QMessageBox, QWidget, QLabel,
-             QToolButton, QErrorMessage, qApp, QToolBar,
-            QStatusBar, QSystemTrayIcon, QMenu, QTimeEdit)
-from PyQt5.QtCore import (QFile, QPoint, QRect, QSize, Qt, QTime,
-            QProcess, QThread, pyqtSignal, pyqtSlot, Q_ARG , Qt, QMetaObject,
-            QObject)
+             qApp, QSystemTrayIcon, QMenu)
+from PyQt5.QtCore import (QFile, QTime)
 from PyQt5.QtGui import QIcon, QPixmap, QImage
 from easysettings import EasySettings
 import sys, os, winreg, greet, PyQt5, threading, time, schedule
@@ -43,7 +40,7 @@ logo = resource_path("./icons/logo.png")
 logo_ico = resource_path("./icons/logo.ico")
 cfg_bg = resource_path("./gui/bg.png")
 dm_enab = resource_path("./icons/dm_enab.png")
-dm_vers = 'v.1.04 - 2021-01-29'
+dm_vers = 'v.1.05 - 2021-03-24'
 REG_PATH = r'SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize' #win theme
 START_PATH = r'SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run' #for autostart with windows
 
