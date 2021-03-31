@@ -40,7 +40,7 @@ logo = resource_path("./icons/logo.png")
 logo_ico = resource_path("./icons/logo.ico")
 cfg_bg = resource_path("./gui/bg.png")
 dm_enab = resource_path("./icons/dm_enab.png")
-dm_vers = 'v.1.05 - 2021-03-24'
+dm_vers = 'v.1.05 - 2021-03-31'
 REG_PATH = r'SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize' #win theme
 START_PATH = r'SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run' #for autostart with windows
 
@@ -248,23 +248,9 @@ def cmd_config():
 # Create the tray
 tray = QSystemTrayIcon()
 try:
-    saved_settings = config.get("saved_state")
-    if saved_settings == "No":
-        icon = QIcon(dm_cfg)
-        tray.setIcon(icon)
-        tray.setToolTip("Darkmode - go to settings!")
-    elif get_reg('SystemUsesLightTheme', REG_PATH) == 1:
-        off_icon = QIcon(dmoff_icon)
-        tray.setIcon(off_icon)
-        tray.setToolTip("Darkmode")
-    elif get_reg('SystemUsesLightTheme', REG_PATH) == 0:
-        on_icon = QIcon(dmon_icon)
-        tray.setIcon(on_icon)
-        tray.setToolTip("Darkmode")
-    else:
-        icon = QIcon(dm_cfg)
-        tray.setIcon(icon)
-        tray.setToolTip("Darkmode (icon will change when you change mode!)")
+    icon = QIcon(logo)
+    tray.setIcon(icon)
+    tray.setToolTip("Darkmode")
 except WindowsError:
     pass
 tray.setVisible(True)
